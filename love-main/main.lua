@@ -400,6 +400,9 @@ function love.gamepadpressed(joystick, button)
 			rendercode()
 		end
 	end
+	if button == "start" then
+		love.event.quit()
+    end
 end
 
 function love.textinput(text)
