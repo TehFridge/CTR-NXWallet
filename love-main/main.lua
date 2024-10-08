@@ -10,6 +10,7 @@ local sha1 = require("sha1")
 local struct = require("lib.struct")
 local jsonread = true
 local code128 = require("lib.bar128") -- an awesome Code128 library made by Nawias (POLSKA GUROM)
+local EAN13 = require("lib.ean13")
 local itfbarcode = require("lib.i25")
 local SCREEN_WIDTH = 400
 local SCREEN_HEIGHT = 240
@@ -17,8 +18,10 @@ local theme = "light"
 local codes = {}
 local exists = "dunno"
 local buttons = {}
+local music = love.audio.newSource("assets/bgm.ogg", "stream")
 love.graphics.setDefaultFilter("nearest")
 kodyexist = love.filesystem.exists("kody.json")
+
 
 if love._potion_version == nil then
 	local nest = require("nest").init({ console = "3ds", scale = 1 })
@@ -36,12 +39,37 @@ function love.load()
 	end
 	jsonread = true
 	showcode = false
-	codetypes = {"CODE128", "CODEI25", "ZAPPKA"}
+	codetypes = {"CODE128", "CODEI25", "ZAPPKA", "QRCODE", "EAN13"}
     state = "main_page"
     code_type = 0
 	selectioncode = 1
     checkforcodes()
 	table.insert(buttons, createButton(195, 195, "assets/add.png", addcode, "main_page", "barcode"))
+	-- --hehe 
+	-- waveImage = itfbarcode.generateImage("3561413568147977", config)
+	-- lookup = {19.194377939831, 19.451234900763, 19.659473904451, 19.818574461834, 19.928138904377, 19.987893378032, 19.997688527736, 19.957499870716, 19.867427857684, 19.727697621764, 19.538658415776, 19.300782739285, 19.014665157599, 18.681020815666, 18.300683650581, 17.874604307181, 17.403847761927, 16.889590661017, 16.333118379383, 15.735821807925, 15.099193877004, 14.424825824899, 13.714403220536, 12.969701750444, 12.192582780467, 11.384988703313, 10.548938083588, 9.6865206124343, 8.7998918843924, 7.8912680095345, 6.9629200743458, 6.0171684651899, 5.0563770685517, 4.0829473625525, 3.0993124145047, 2.1079307995114, 1.1112804553084, 0.1118524887109, -0.88785505085677, -1.8853434151833, -2.8781194028397, -3.8637015908846, -4.8396265371292, -5.8034549374598, -6.7527777228276, -7.685222080667, -8.598457385691, -9.4902010252409, -10.358224104629, -11.200357018214, -12.014494872287, -12.798602746207, -13.550720778645, -14.268969066215, -14.951552362255, -15.596764564008, -16.202992976988, -16.768722345882, -17.292538641893, -17.773132597079, -18.209302976841, -18.599959582382, -18.944125975639, -19.240941919867, -19.489665529785, -19.689675125899, -19.840470788383, -19.941675606614, -19.993036621252, -19.994425456509, -19.945838641021, -19.847397616521, -19.699348434306, -19.502061140227, -19.256028849774, -18.961866515543, -18.620309390173, -18.232211188596, -17.7985419542, -17.32038563422, -16.798937370437, -16.235500511946, -15.631483357459, -14.988395635299, -14.307844729855, -13.591531663969, -12.841246847255, -12.058865601015, -11.246343470909, -10.405711339107, -9.5390703481479, -8.64858664917, -7.736485987666, -6.8050481402769, -5.8566012165376, -4.8935158398159, -3.9181992219885, -2.9330891466648, -1.9406478759978, -0.94335599631063, 0.1118524887109, 1.1112804553084, 2.1079307995114, 3.0993124145047, 4.0829473625525, 5.0563770685517, 6.0171684651899, 6.9629200743458, 7.8912680095345, 8.7998918843924, 9.6865206124343, 10.548938083588, 11.384988703313, 12.192582780467, 12.969701750444, 13.714403220536, 14.424825824899, 15.099193877004, 15.735821807925, 16.333118379383, 16.889590661017, 17.403847761927, 17.874604307181, 18.300683650581, 18.681020815666, 19.014665157599}
+	-- numSegments = 126 -- Number of vertical slices (higher = smoother wave)
+	-- offsets = {}      -- Table to store the Y offsets for each slice
+	-- local sin = math.sin
+	-- local pi = math.pi
+	-- local imgWidth = waveImage:getWidth()
+	-- local imgHeight = waveImage:getHeight()
+	-- sliceWidth = imgWidth / numSegments
+	-- yPos = love.graphics.getHeight() / 2 - imgHeight / 2
+	-- yOffsetIndex = 0
+	-- -- Precompute quads if the number of segments is fixed
+	-- quads = {}
+	-- logoSpriteBatch = love.graphics.newSpriteBatch(waveImage, numSegments)
+	-- for i = 0, numSegments - 1 do
+		-- local x = i * sliceWidth
+		-- quads[i + 1] = love.graphics.newQuad(x, 0, sliceWidth, imgHeight, imgWidth, imgHeight)
+	-- end
+	-- local function getYOffsetIndex(i)
+		-- return (yOffsetIndex + i) % 126 + 1 -- + 1 bo tablice w lua indexują się od 1
+	-- end
+	-- local function updateYOffsetIndex() yOffsetIndex = (yOffsetIndex + 1) % 126 end
+	music:setLooping(true)
+    music:play()
 end
 local function isLeapYear(year)
     return (year % 4 == 0 and year % 100 ~= 0) or (year % 400 == 0)
@@ -210,7 +238,11 @@ end
 function add_new_code()
 	declarecode = codetypes[selectioncode]
 	changes = "code"
-	love.keyboard.setTextInput(true, {type = "numpad", hint = "Numerki z Kodu"})
+	if declarecode == "QRCODE" then
+		love.keyboard.setTextInput(true, {hint = "Dane Kodu"})
+	else
+		love.keyboard.setTextInput(true, {type = "numpad", hint = "Numerki z Kodu"})
+	end
 	love.keyboard.setTextInput(false)
 end
 
@@ -303,9 +335,25 @@ function draw_top_screen()
 				local imageWidth = barcodeImage:getWidth()
 				local currentX2 = (400 - imageWidth) / 2
 				love.graphics.draw(barcodeImage, currentX2, 70)
-			elseif codeteraz == "ZAPPKA" then
+			elseif codeteraz == "ZAPPKA" or codeteraz == "QRCODE" then
 				love.graphics.setColor(0, 0, 0, 1)
 				qr1:draw(95,10,0,6.5)
+			elseif codeteraz == "EAN13" then
+				local screen_width, screen_height = love.graphics.getWidth(), love.graphics.getHeight()
+				love.graphics.setColor(0, 0, 0, 1)
+				EAN13.render_image(barcode_image, screen_width, screen_height)
+			-- elseif codeteraz == "wavetest" then
+				-- love.graphics.setColor(1, 1, 1, 1)
+				-- local imageWidth = barcodeImage:getWidth()
+				-- local currentX2 = (400 - imageWidth) / 2
+				-- logoSpriteBatch:clear()
+				-- for i = 0, numSegments - 1 do
+					-- local yOffset = (lookup[i + 1] or 0) / 2  -- Ensure lookup is not nil            
+				-- -- add the precomputed quad with offset to spritebatch
+					-- logoSpriteBatch:add(quads[i + 1], i*sliceWidth, yPos + yOffset)
+				-- end    
+					-- -- draw the spritebatch    
+				-- love.graphics.draw(logoSpriteBatch, currentX2)
 			end
 		else
 			TextDraw.DrawTextCentered("Ticket Manager", SCREEN_WIDTH/2, 16, {0, 0, 0, 1}, font, 2.3)
@@ -343,11 +391,12 @@ function draw_bottom_screen()
 		end
     end 
 	if state == "whatcodetype" then
-		scrolllimit = 3
 		TextDraw.DrawText("->", 5, 50 + selectioncode * 20, {0, 0, 0, 1}, font, 1.9)
         TextDraw.DrawText("Code128", 27, 70, {0, 0, 0, 1}, font, 1.9)
 		TextDraw.DrawText("Code I2/5 (Pyrkon)", 27, 90, {0, 0, 0, 1}, font, 1.9)
 		TextDraw.DrawText("Żappka (Requires Internet)", 27, 110, {0, 0, 0, 1}, font, 1.9)
+		TextDraw.DrawText("QR Code", 27, 130, {0, 0, 0, 1}, font, 1.9)
+		TextDraw.DrawText("EAN13 Barcode", 27, 150, {0, 0, 0, 1}, font, 1.9)
     end 
 	for _, button in ipairs(buttons) do
 		love.graphics.setColor(1, 1, 1, 1)
@@ -361,6 +410,12 @@ function rendercode()
 		barcodeImage = itfbarcode.generateImage(codes[selectioncode].code, config)
 	elseif codes[selectioncode].codetype == "ZAPPKA" then
 		calculatetotp()
+	elseif codes[selectioncode].codetype == "QRCODE" then
+		qr1 = qrcode(codes[selectioncode].code)
+	elseif codes[selectioncode].codetype == "EAN13" then
+		barcode_image = EAN13.create_image(codes[selectioncode].code, 3, 70)
+	elseif codes[selectioncode].codetype == "wavetest" then
+		barcodeImage = itfbarcode.generateImage(codes[selectioncode].code, config)
 	end
 	codeteraz = codes[selectioncode].codetype
 	showcode = true
@@ -381,7 +436,7 @@ function love.gamepadpressed(joystick, button)
 			end
 		end
 		if button == "dpdown" then
-			if selectioncode ~= scrolllimit then
+			if selectioncode ~= #codetypes then
 				selectioncode = selectioncode + 1
 			end
 		end
@@ -421,7 +476,16 @@ function love.textinput(text)
 		sendbackvercode(text)  
 	end
 end
-
+function shiftRight(t)
+    local last = t[#t]
+    for i = #t, 2, -1 do
+        t[i] = t[i-1]
+    end
+    t[1] = last
+end
 function love.update(dt)
+	-- if codeteraz == "wavetest" then
+		-- shiftRight(lookup)
+	-- end
     love.graphics.origin()  
 end
