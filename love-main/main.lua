@@ -291,10 +291,12 @@ function checkforcodes()
 end
 function goback()
 	gonotfish:play()
+	selectioncode = 1
 	state = "main_page"
 end
 function addcode()
 	sfx2:play()
+	selectioncode = 1
 	state = "whatcodetype"
 end
 --kod podjebany z żappka3ds lol (no wsm nie podjebany bo to mój kod)
@@ -515,7 +517,7 @@ function love.gamepadpressed(joystick, button)
 		end
 		if button == "dpdown" then
 			if #codes < 6 then
-				if selectioncode ~= 6 then
+				if selectioncode ~= #codes then
 					sfx:play()
 					selectioncode = selectioncode + 1
 				end
