@@ -28,7 +28,7 @@ kodyexist = love.filesystem.exists("kody.json")
 
 
 if love._potion_version == nil then
-	local nest = require("nest").init({ console = "switch", scale = 1 })
+	local nest = require("nest").init({ console = "3ds", scale = 1 })
 	love._nest = true
     love._console_name = "Switch"
 end
@@ -61,7 +61,11 @@ function love.load()
     code_type = 0
 	selectioncode = 1
     checkforcodes()
-	table.insert(buttons, createButton(SCREEN_WIDTH / 1.25, SCREEN_WIDTH / 2, "assets/add.png", addcode, "main_page", "barcode"))
+	if love._console == "Switch" then
+		table.insert(buttons, createButton(SCREEN_WIDTH / 1.25, SCREEN_WIDTH / 2, "assets/add.png", addcode, "main_page", "barcode"))
+	else
+		table.insert(buttons, createButton(195, 195, "assets/add.png", addcode, "main_page", "barcode"))
+	end
 	table.insert(buttons, createButton(10, 10, "assets/back.png", goback, "whatcodetype", "barcode"))
 	-- --hehe 
 	-- waveImage = itfbarcode.generateImage("3561413568147977", config)
