@@ -1,5 +1,5 @@
 # TicketManager
-A simple manager/viewer for your loyalty card codes(for example: the one from the starbucks app), convention ticket codes and more.
+A simple manager/viewer for your barcodes and qrcodes, yknow the things convention tickets or loyalty cards use.
 
-# Changelog
-Nothing here to see now.
+![PXL_20241012_204514738](https://github.com/user-attachments/assets/eb80caf0-3bfd-4bca-8290-c6503b688440)
+
