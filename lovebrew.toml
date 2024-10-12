@@ -6,7 +6,7 @@
 # [string] @version     : Version of the game in {major}.{minor}.{revision} format, default: '0.1.0'
 # [string] @icons       : Icon paths, defaults: empty string ('')
 [metadata]
-title = "TicketManager"
+title = "CTR/NXWallet"
 author = "TehFridge"
 description = "Bileciki do kontroli."
 version = "1.0.0"
