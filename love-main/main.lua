@@ -417,14 +417,14 @@ function draw_top_screen()
 	if love._console == "Switch" then
 		if state == "main_page" then
 			TextDraw.DrawText("Your Codes/Tickets", 60, 40, {0, 0, 0, 1}, font, 3)
-			TextDraw.DrawText("->", 5, 70 + selectioncode * 20, {0, 0, 0, 1}, font, 1.9)
+			TextDraw.DrawText("->", 5, 70 + selectioncode * 30, {0, 0, 0, 1}, font, 1.9)
 			if #codes < 6 then
 				for i = 1, #codes do
-					TextDraw.DrawText(codes[i + pagegap].name, 27, 70 + 20 * i, {0, 0, 0, 1}, font, 2.3)
+					TextDraw.DrawText(codes[i + pagegap].name, 27, 70 + 30 * i, {0, 0, 0, 1}, font, 2.3)
 				end
 			else 
 				for i = 1, 6 do
-					TextDraw.DrawText(codes[i + pagegap].name, 27, 70 + 20 * i, {0, 0, 0, 1}, font, 1.9)
+					TextDraw.DrawText(codes[i + pagegap].name, 27, 70 + 30 * i, {0, 0, 0, 1}, font, 1.9)
 				end
 			end
 		end 
