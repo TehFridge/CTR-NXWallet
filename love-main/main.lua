@@ -176,16 +176,31 @@ function calculatetotp() --NAPRAWIŁEM KURWA
     local msg = struct.pack(">L8", ts)
 
     local outputBytes = sha1.hmac_binary(secret, msg)
-	--print(outputBytes)
 	if outputBytes ~= nil then
-		local magicNumber = bit.band(c(outputBytes, bit.band(outputBytes:byte(#outputBytes), 15)), 2147483647) % 1000000		
-		totp = string.format("%06d", magicNumber)
-		print(totp)
-		print("https://zlgn.pl/view/dashboard?ploy=" .. codes[selectioncode + pagegap].zappkaid .. "&loyal=" .. totp)
-		qr1 = qrcode("https://zlgn.pl/view/dashboard?ploy=" .. codes[selectioncode + pagegap].zappkaid .. "&loyal=" .. totp)
-		generated_once = true
+		-- Ensure we have enough bytes to read
+		if #outputBytes >= 4 then
+			-- Safely extract byte for offset and perform operations
+			local byteIndex = outputBytes:byte(#outputBytes)
+			print("byteIndex: " .. byteIndex)
+			local offset = bit.band(byteIndex, 15)
+			print("offset: " .. offset)
+			if offset ~= 0 then
+				local magicNumber = bit.band(c(outputBytes, offset), javaIntMax) % 1000000		
+				totp = string.format("%06d", magicNumber)
+				print(totp)
+				print("https://zlgn.pl/view/dashboard?ploy=" .. codes[selectioncode + pagegap].zappkaid .. "&loyal=" .. totp)
+				qr1 = qrcode("https://zlgn.pl/view/dashboard?ploy=" .. codes[selectioncode + pagegap].zappkaid .. "&loyal=" .. totp)
+			else 
+				qr1 = nil
+			end
+			generated_once = true
+		else
+			print("outputBytes too short: " .. #outputBytes)
+			generated_once = false
+		end
 	else
-		generated_once = true
+		print("Failed to generate HMAC")
+		generated_once = false
 		qr1 = nil
 	end
 end
@@ -367,13 +382,17 @@ function draw_top_screen()
 				love.graphics.draw(barcodeImage, currentX2, y)
 			elseif codeteraz == "ZAPPKA" or codeteraz == "QRCODE" then
 				love.graphics.setColor(0, 0, 0, 1)
-				-- Get the size of the QR code
-				local qrSize = qr1:getSize()
-				local scale = QR_SCALE_BASE / qrSize 
-				-- Calculate the position to center the QR code on the screen
-				local x = (SCREEN_WIDTH - qrSize) / 2
-				local y = (SCREEN_HEIGHT - qrSize) / 2
-				qr1:draw(x + 15,y + 10,0,scale, scale, qrSize / 2, qrSize / 2)
+				if qr1 ~= nil then
+					-- Get the size of the QR code
+					local qrSize = qr1:getSize()
+					local scale = QR_SCALE_BASE / qrSize 
+					-- Calculate the position to center the QR code on the screen
+					local x = (SCREEN_WIDTH - qrSize) / 2
+					local y = (SCREEN_HEIGHT - qrSize) / 2
+					qr1:draw(x + 15,y + 10,0,scale, scale, qrSize / 2, qrSize / 2)
+				else
+					TextDraw.DrawTextCentered("Sorry the TOTP Generation Failed. Try Again Later", SCREEN_WIDTH/2, SCREEN_HEIGHT / 2, {0, 0, 0, 1}, font, 2)
+				end
 			elseif codeteraz == "EAN13" then
 				love.graphics.setColor(1, 1, 1, 1)
 				EAN13.render_image(barcode_image, SCREEN_WIDTH, SCREEN_HEIGHT, BAR_SCALE)
