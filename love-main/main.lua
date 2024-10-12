@@ -414,7 +414,11 @@ function draw_top_screen()
 				-- love.graphics.draw(logoSpriteBatch, currentX2)
 			end
 		else
-			TextDraw.DrawTextCentered("Ticket Manager", SCREEN_WIDTH/2, 16, {0, 0, 0, 1}, font, 2.3)
+			if love._console == "3DS" then
+				TextDraw.DrawTextCentered("CTRWallet", SCREEN_WIDTH/2, 16, {0, 0, 0, 1}, font, 2.3)
+			else 
+				TextDraw.DrawTextCentered("NXWallet", SCREEN_WIDTH/2, 16, {0, 0, 0, 1}, font, 2.3)
+			end
 			TextDraw.DrawTextCentered("by TehFridge", SCREEN_WIDTH/2, 42, {0, 0, 0, 1}, font, 1.9)
 		end
     end
