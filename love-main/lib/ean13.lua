@@ -49,42 +49,41 @@ function EAN13.encode(barcode)
     return encoded
 end
 
--- Function to create the barcode image (Canvas)
 function EAN13.create_image(barcode, width, height)
     local encoded_barcode = EAN13.encode(barcode)
     local barcode_width = #encoded_barcode * width  -- Calculate total width of the barcode
     local barcode_height = height
 
-    -- Create a Canvas to draw the barcode
-    local barcode_canvas = love.graphics.newCanvas(barcode_width, barcode_height)
-    love.graphics.setCanvas(barcode_canvas)
-    love.graphics.clear()
+    -- Create an ImageData to draw the barcode
+    local barcode_image = love.image.newImageData(barcode_width, barcode_height)
 
-    local current_x = 0
+    -- Iterate through the encoded barcode and set pixels in ImageData
+    for x = 0, barcode_width - 1 do
+        for y = 0, barcode_height - 1 do
+            local bit_index = math.floor(x / width) + 1
+            local bit = encoded_barcode:sub(bit_index, bit_index)
 
-    -- Draw the encoded barcode to the canvas
-    for i = 1, #encoded_barcode do
-        local bit = encoded_barcode:sub(i, i)
-        if bit == "1" then
-            love.graphics.rectangle("fill", current_x, 0, width, height)
+            if bit == "1" then
+                barcode_image:setPixel(x, y, 0, 0, 0, 1)  -- Black for bar
+            else
+                barcode_image:setPixel(x, y, 1, 1, 1, 1)  -- White for space
+            end
         end
-        current_x = current_x + width
     end
 
-    love.graphics.setCanvas()  -- Reset to default canvas
-    return barcode_canvas  -- Return the generated canvas
+	draw_barcode_image = love.graphics.newImage(barcode_image)
 end
 
 -- Function to render the barcode image at the center of the screen
-function EAN13.render_image(canvas, screen_width, screen_height)
-    local canvas_width, canvas_height = canvas:getDimensions()
+function EAN13.render_image(image_data, screen_width, screen_height, scale)
+    local image_width, image_height = draw_barcode_image:getDimensions()
 
     -- Calculate the position to center the barcode on the screen
-    local x = (screen_width - canvas_width) / 2
-    local y = (screen_height - canvas_height) / 2
-
-    -- Draw the barcode canvas to the screen, centered
-    love.graphics.draw(canvas, x, y)
+    local x = (screen_width - image_width * (scale/2.5)) / 2
+    local y = (screen_height - image_height * (scale/2.5)) / 2
+	
+    -- Draw the barcode image to the screen, centered
+    love.graphics.draw(draw_barcode_image, x, y, 0, scale / 2.5)
 end
 
 return EAN13

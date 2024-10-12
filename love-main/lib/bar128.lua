@@ -254,7 +254,7 @@ end
 ---@param text 'notext'|'text' Indicates whether the text representation should be drawn underneath the barcode.
 ---@param x number X coordinate
 ---@param y number Y coordinate
-function Barcode:draw(text, y)
+function Barcode:draw(text, y, S_WIDTH)
     -- Calculate the total width of the barcode
     local totalWidth = 0
     for _, glyph in pairs(self.cachedBarcode) do
@@ -267,7 +267,7 @@ function Barcode:draw(text, y)
     totalWidth = totalWidth + (self.barWidth * 20)
 
     -- Center the barcode on a 400px width screen
-    local x = (400 - totalWidth) / 2
+    local x = (S_WIDTH - totalWidth) / 2
 
     -- Account for the quiet zone
     local cursor = x + self.barWidth * 10

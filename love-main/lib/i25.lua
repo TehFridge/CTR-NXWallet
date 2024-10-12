@@ -16,7 +16,7 @@ local stopCode = "wnn"
 local defaultConfig = {
     narrowWidth = 2.5,    -- Width of narrow bars in pixels
     wideWidth = 7,      -- Width of wide bars in pixels
-    barHeight = 60,    -- Height of the barcode in pixels
+    barHeight = 20,    -- Height of the barcode in pixels
     barColor = {0, 0, 0, 255},       -- Black bars (RGBA)
     backgroundColor = {255, 255, 255, 255}  -- White background (RGBA)
 }
@@ -61,12 +61,12 @@ local function generateEncoding(number)
 end
 
 -- Function to generate ImageData for the barcode
-function itfbarcode.generateImageData(number, config)
+function itfbarcode.generateImageData(number, config, scale)
     config = config or {}
     -- Merge default config with user config
-    local narrowWidth = config.narrowWidth or defaultConfig.narrowWidth
-    local wideWidth = config.wideWidth or defaultConfig.wideWidth
-    local barHeight = config.barHeight or defaultConfig.barHeight
+    local narrowWidth = config.narrowWidth or defaultConfig.narrowWidth * (scale / 2.5)
+    local wideWidth = config.wideWidth or defaultConfig.wideWidth * (scale / 2.5)
+    local barHeight = config.barHeight or defaultConfig.barHeight * scale * 1.5
     local barColor = config.barColor or defaultConfig.barColor
     local backgroundColor = config.backgroundColor or defaultConfig.backgroundColor
 
@@ -110,8 +110,8 @@ function itfbarcode.generateImageData(number, config)
 end
 
 -- Function to generate an Image from the barcode
-function itfbarcode.generateImage(number, config)
-    local imageData = itfbarcode.generateImageData(number, config)
+function itfbarcode.generateImage(number, config, skala)
+    local imageData = itfbarcode.generateImageData(number, config, skala)
     return love.graphics.newImage(imageData)
 end
 

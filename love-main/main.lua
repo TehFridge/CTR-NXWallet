@@ -17,16 +17,33 @@ local SCREEN_HEIGHT = 240
 local theme = "light"
 local codes = {}
 local exists = "dunno"
+local pagegap = 0
 local buttons = {}
 local music = love.audio.newSource("assets/bgm.ogg", "stream")
+local sfx = love.audio.newSource("assets/cursor.ogg", "static")
+local gonotfish = love.audio.newSource("assets/back.ogg", "static")
+local sfx2 = love.audio.newSource("assets/accept.ogg", "static")
 love.graphics.setDefaultFilter("nearest")
 kodyexist = love.filesystem.exists("kody.json")
 
 
 if love._potion_version == nil then
-	local nest = require("nest").init({ console = "3ds", scale = 1 })
+	local nest = require("nest").init({ console = "switch", scale = 1 })
 	love._nest = true
-    love._console_name = "3DS"
+    love._console_name = "Switch"
+end
+if love._console == "3DS" then
+	SCREEN_WIDTH = 400
+	SCREEN_HEIGHT = 240
+	QR_SCALE_BASE = 214.5
+	BAR_SCALE = 2.5
+	BUTTONSCALE = 1
+elseif love._console == "Switch" then
+	SCREEN_WIDTH = 1280
+	SCREEN_HEIGHT = 720
+	QR_SCALE_BASE = 504.5
+	BAR_SCALE = 6
+	BUTTONSCALE = 2
 end
 
 function love.load()
@@ -44,7 +61,8 @@ function love.load()
     code_type = 0
 	selectioncode = 1
     checkforcodes()
-	table.insert(buttons, createButton(195, 195, "assets/add.png", addcode, "main_page", "barcode"))
+	table.insert(buttons, createButton(SCREEN_WIDTH / 1.25, SCREEN_WIDTH / 2, "assets/add.png", addcode, "main_page", "barcode"))
+	table.insert(buttons, createButton(10, 10, "assets/back.png", goback, "whatcodetype", "barcode"))
 	-- --hehe 
 	-- waveImage = itfbarcode.generateImage("3561413568147977", config)
 	-- lookup = {19.194377939831, 19.451234900763, 19.659473904451, 19.818574461834, 19.928138904377, 19.987893378032, 19.997688527736, 19.957499870716, 19.867427857684, 19.727697621764, 19.538658415776, 19.300782739285, 19.014665157599, 18.681020815666, 18.300683650581, 17.874604307181, 17.403847761927, 16.889590661017, 16.333118379383, 15.735821807925, 15.099193877004, 14.424825824899, 13.714403220536, 12.969701750444, 12.192582780467, 11.384988703313, 10.548938083588, 9.6865206124343, 8.7998918843924, 7.8912680095345, 6.9629200743458, 6.0171684651899, 5.0563770685517, 4.0829473625525, 3.0993124145047, 2.1079307995114, 1.1112804553084, 0.1118524887109, -0.88785505085677, -1.8853434151833, -2.8781194028397, -3.8637015908846, -4.8396265371292, -5.8034549374598, -6.7527777228276, -7.685222080667, -8.598457385691, -9.4902010252409, -10.358224104629, -11.200357018214, -12.014494872287, -12.798602746207, -13.550720778645, -14.268969066215, -14.951552362255, -15.596764564008, -16.202992976988, -16.768722345882, -17.292538641893, -17.773132597079, -18.209302976841, -18.599959582382, -18.944125975639, -19.240941919867, -19.489665529785, -19.689675125899, -19.840470788383, -19.941675606614, -19.993036621252, -19.994425456509, -19.945838641021, -19.847397616521, -19.699348434306, -19.502061140227, -19.256028849774, -18.961866515543, -18.620309390173, -18.232211188596, -17.7985419542, -17.32038563422, -16.798937370437, -16.235500511946, -15.631483357459, -14.988395635299, -14.307844729855, -13.591531663969, -12.841246847255, -12.058865601015, -11.246343470909, -10.405711339107, -9.5390703481479, -8.64858664917, -7.736485987666, -6.8050481402769, -5.8566012165376, -4.8935158398159, -3.9181992219885, -2.9330891466648, -1.9406478759978, -0.94335599631063, 0.1118524887109, 1.1112804553084, 2.1079307995114, 3.0993124145047, 4.0829473625525, 5.0563770685517, 6.0171684651899, 6.9629200743458, 7.8912680095345, 8.7998918843924, 9.6865206124343, 10.548938083588, 11.384988703313, 12.192582780467, 12.969701750444, 13.714403220536, 14.424825824899, 15.099193877004, 15.735821807925, 16.333118379383, 16.889590661017, 17.403847761927, 17.874604307181, 18.300683650581, 18.681020815666, 19.014665157599}
@@ -70,6 +88,7 @@ function love.load()
 	-- local function updateYOffsetIndex() yOffsetIndex = (yOffsetIndex + 1) % 126 end
 	music:setLooping(true)
     music:play()
+	music:setVolume(0.85)
 end
 local function isLeapYear(year)
     return (year % 4 == 0 and year % 100 ~= 0) or (year % 400 == 0)
@@ -109,20 +128,22 @@ function createButton(x, y, imagePath, callback, statename, secstatename, thrdst
     return {
         x = x,
         y = y,
-        width = image:getWidth(),
-        height = image:getHeight(),
+        width = image:getWidth() * BUTTONSCALE,
+        height = image:getHeight() * BUTTONSCALE,
         image = image,
         callback = callback,
         draw = function(self)
             -- Draw the image as the button
 			if state == statename or state == secstatename then
-				love.graphics.draw(self.image, self.x, self.y)
+				love.graphics.draw(self.image, self.x, self.y, 0, BUTTONSCALE)
 			end
         end,
         isTouched = function(self, touchX, touchY)
             -- Check if touch is within button boundaries
-            return touchX > self.x and touchX < self.x + self.width and
-                   touchY > self.y and touchY < self.y + self.height
+			if state == statename or state == secstatename then
+				return touchX > self.x and touchX < self.x + self.width and
+					touchY > self.y and touchY < self.y + self.height
+			end
         end
     }
 end
@@ -136,7 +157,7 @@ function calculatetotp() --NAPRAWIŁEM KURWA
 		end
 		return result
 	end
-	local secretHex = codes[selectioncode].qrsecret
+	local secretHex = codes[selectioncode + pagegap].qrsecret
 	local secret = (secretHex:gsub('..', function(hex)
         return string.char(tonumber(hex, 16))
     end))
@@ -160,8 +181,8 @@ function calculatetotp() --NAPRAWIŁEM KURWA
 		local magicNumber = bit.band(c(outputBytes, bit.band(outputBytes:byte(#outputBytes), 15)), 2147483647) % 1000000		
 		totp = string.format("%06d", magicNumber)
 		print(totp)
-		print("https://zlgn.pl/view/dashboard?ploy=" .. codes[selectioncode].zappkaid .. "&loyal=" .. totp)
-		qr1 = qrcode("https://zlgn.pl/view/dashboard?ploy=" .. codes[selectioncode].zappkaid .. "&loyal=" .. totp)
+		print("https://zlgn.pl/view/dashboard?ploy=" .. codes[selectioncode + pagegap].zappkaid .. "&loyal=" .. totp)
+		qr1 = qrcode("https://zlgn.pl/view/dashboard?ploy=" .. codes[selectioncode + pagegap].zappkaid .. "&loyal=" .. totp)
 		generated_once = true
 	else
 		generated_once = true
@@ -217,11 +238,15 @@ function updatetime_withserver()
 	return dawajczas
 end
 function love.draw(screen)
-    if screen == "bottom" then
-        draw_bottom_screen()
-    else
-        draw_top_screen()
-    end
+	if love._console ~= "Switch" then
+		if screen == "bottom" then
+			draw_bottom_screen()
+		else
+			draw_top_screen()
+		end
+	else
+		draw_top_screen()
+	end
 end 
 function zappkalogin()
 	declarecode = codetypes[selectioncode]
@@ -264,8 +289,12 @@ function checkforcodes()
 		love.filesystem.write("kody.json", json.encode(codes))
 	end
 end
-
+function goback()
+	gonotfish:play()
+	state = "main_page"
+end
 function addcode()
+	sfx2:play()
 	state = "whatcodetype"
 end
 --kod podjebany z żappka3ds lol (no wsm nie podjebany bo to mój kod)
@@ -311,9 +340,6 @@ function sendbackvercode(smscode)
 end
 
 function draw_top_screen()
-    SCREEN_WIDTH = 400
-    SCREEN_HEIGHT = 240
-
     -- Fill background
     if theme == "light" then
         love.graphics.setColor(1, 1, 1, 1)
@@ -329,19 +355,26 @@ function draw_top_screen()
 		if showcode == true then
 			if codeteraz == "CODE128" then
 				love.graphics.setColor(0, 0, 0, 1)
-				barcode:draw('notext', 70)
+				local y = (SCREEN_HEIGHT) / 3
+				barcode:draw('notext', y, SCREEN_WIDTH)
 			elseif codeteraz == "CODEI25" then
 				love.graphics.setColor(1, 1, 1, 1)
 				local imageWidth = barcodeImage:getWidth()
-				local currentX2 = (400 - imageWidth) / 2
-				love.graphics.draw(barcodeImage, currentX2, 70)
+				local currentX2 = (SCREEN_WIDTH - imageWidth) / 2
+				local y = (SCREEN_HEIGHT) / 3
+				love.graphics.draw(barcodeImage, currentX2, y)
 			elseif codeteraz == "ZAPPKA" or codeteraz == "QRCODE" then
 				love.graphics.setColor(0, 0, 0, 1)
-				qr1:draw(95,10,0,6.5)
+				-- Get the size of the QR code
+				local qrSize = qr1:getSize()
+				local scale = QR_SCALE_BASE / qrSize 
+				-- Calculate the position to center the QR code on the screen
+				local x = (SCREEN_WIDTH - qrSize) / 2
+				local y = (SCREEN_HEIGHT - qrSize) / 2
+				qr1:draw(x + 15,y + 10,0,scale, scale, qrSize / 2, qrSize / 2)
 			elseif codeteraz == "EAN13" then
-				local screen_width, screen_height = love.graphics.getWidth(), love.graphics.getHeight()
-				love.graphics.setColor(0, 0, 0, 1)
-				EAN13.render_image(barcode_image, screen_width, screen_height)
+				love.graphics.setColor(1, 1, 1, 1)
+				EAN13.render_image(barcode_image, SCREEN_WIDTH, SCREEN_HEIGHT, BAR_SCALE)
 			-- elseif codeteraz == "wavetest" then
 				-- love.graphics.setColor(1, 1, 1, 1)
 				-- local imageWidth = barcodeImage:getWidth()
@@ -360,12 +393,40 @@ function draw_top_screen()
 			TextDraw.DrawTextCentered("by TehFridge", SCREEN_WIDTH/2, 42, {0, 0, 0, 1}, font, 1.9)
 		end
     end
+	if love._console == "Switch" then
+		if state == "main_page" then
+			TextDraw.DrawText("Your Codes/Tickets", 60, 40, {0, 0, 0, 1}, font, 3)
+			TextDraw.DrawText("->", 5, 70 + selectioncode * 20, {0, 0, 0, 1}, font, 1.9)
+			if #codes < 6 then
+				for i = 1, #codes do
+					TextDraw.DrawText(codes[i + pagegap].name, 27, 70 + 20 * i, {0, 0, 0, 1}, font, 2.3)
+				end
+			else 
+				for i = 1, 6 do
+					TextDraw.DrawText(codes[i + pagegap].name, 27, 70 + 20 * i, {0, 0, 0, 1}, font, 1.9)
+				end
+			end
+		end 
+		if state == "whatcodetype" then
+			TextDraw.DrawText("->", 5, 120 + selectioncode * 20, {0, 0, 0, 1}, font, 1.9)
+			TextDraw.DrawText("Code128", 27, 140, {0, 0, 0, 1}, font, 1.9)
+			TextDraw.DrawText("Code I2/5", 27, 160, {0, 0, 0, 1}, font, 1.9)
+			TextDraw.DrawText("Żappka (Requires Internet)", 27, 180, {0, 0, 0, 1}, font, 1.9)
+			TextDraw.DrawText("QR Code", 27, 200, {0, 0, 0, 1}, font, 1.9)
+			TextDraw.DrawText("EAN13 Barcode", 27, 220, {0, 0, 0, 1}, font, 1.9)
+		end 
+		for _, button in ipairs(buttons) do
+			love.graphics.setColor(1, 1, 1, 1)
+			button:draw()
+		end	
+	end
 	if state == "whatcodetype" then
         TextDraw.DrawTextCentered("Select a code type", SCREEN_WIDTH/2, 106, {0, 0, 0, 1}, font, 2.3)
     end
 	if state == "restartplz" then
         TextDraw.DrawTextCentered("Restart the app plz.", SCREEN_WIDTH/2, 106, {0, 0, 0, 1}, font, 2.3)
     end
+	TextDraw.DrawText("BGM: Mission Briefing LSDJ Cover by nanka 8bit", 1, SCREEN_HEIGHT - 20, {0, 0, 0, 1}, font, 1.3)
 end
        
 function draw_bottom_screen()
@@ -383,17 +444,22 @@ function draw_bottom_screen()
         end 
     end
     if state == "main_page" then
-		scrolllimit = #codes
         TextDraw.DrawTextCentered("Your Codes/Tickets", SCREEN_WIDTH/2.5, 20, {0, 0, 0, 1}, font, 2.3)
 		TextDraw.DrawText("->", 5, 50 + selectioncode * 20, {0, 0, 0, 1}, font, 1.9)
-		for i = 1, #codes do
-			TextDraw.DrawText(codes[i].name, 27, 50 + 20 * i, {0, 0, 0, 1}, font, 1.9)
+		if #codes < 6 then
+			for i = 1, #codes do
+				TextDraw.DrawText(codes[i + pagegap].name, 27, 50 + 20 * i, {0, 0, 0, 1}, font, 1.9)
+			end
+		else 
+			for i = 1, 6 do
+				TextDraw.DrawText(codes[i + pagegap].name, 27, 50 + 20 * i, {0, 0, 0, 1}, font, 1.9)
+			end
 		end
     end 
 	if state == "whatcodetype" then
 		TextDraw.DrawText("->", 5, 50 + selectioncode * 20, {0, 0, 0, 1}, font, 1.9)
         TextDraw.DrawText("Code128", 27, 70, {0, 0, 0, 1}, font, 1.9)
-		TextDraw.DrawText("Code I2/5 (Pyrkon)", 27, 90, {0, 0, 0, 1}, font, 1.9)
+		TextDraw.DrawText("Code I2/5", 27, 90, {0, 0, 0, 1}, font, 1.9)
 		TextDraw.DrawText("Żappka (Requires Internet)", 27, 110, {0, 0, 0, 1}, font, 1.9)
 		TextDraw.DrawText("QR Code", 27, 130, {0, 0, 0, 1}, font, 1.9)
 		TextDraw.DrawText("EAN13 Barcode", 27, 150, {0, 0, 0, 1}, font, 1.9)
@@ -404,20 +470,21 @@ function draw_bottom_screen()
 	end	
 end
 function rendercode()
-	if codes[selectioncode].codetype == "CODE128" then
-		barcode = code128(codes[selectioncode].code, 60, 3)
-	elseif codes[selectioncode].codetype == "CODEI25" then
-		barcodeImage = itfbarcode.generateImage(codes[selectioncode].code, config)
-	elseif codes[selectioncode].codetype == "ZAPPKA" then
+	collectgarbage("collect")
+	if codes[selectioncode + pagegap].codetype == "CODE128" then
+		barcode = code128(codes[selectioncode + pagegap].code, 30 * BAR_SCALE, BAR_SCALE)
+	elseif codes[selectioncode + pagegap].codetype == "CODEI25" then
+		barcodeImage = itfbarcode.generateImage(codes[selectioncode + pagegap].code, config, BAR_SCALE)
+	elseif codes[selectioncode + pagegap].codetype == "ZAPPKA" then
 		calculatetotp()
-	elseif codes[selectioncode].codetype == "QRCODE" then
-		qr1 = qrcode(codes[selectioncode].code)
-	elseif codes[selectioncode].codetype == "EAN13" then
-		barcode_image = EAN13.create_image(codes[selectioncode].code, 3, 70)
-	elseif codes[selectioncode].codetype == "wavetest" then
-		barcodeImage = itfbarcode.generateImage(codes[selectioncode].code, config)
+	elseif codes[selectioncode + pagegap].codetype == "QRCODE" then
+		qr1 = qrcode(codes[selectioncode + pagegap].code)
+	elseif codes[selectioncode + pagegap].codetype == "EAN13" then
+		barcode_image = EAN13.create_image(codes[selectioncode + pagegap].code, 3, 67)
+	elseif codes[selectioncode + pagegap].codetype == "wavetest" then
+		barcodeImage = itfbarcode.generateImage(codes[selectioncode + pagegap].code, config, BAR_SCALE)
 	end
-	codeteraz = codes[selectioncode].codetype
+	codeteraz = codes[selectioncode + pagegap].codetype
 	showcode = true
 end
 function love.touchpressed(id, x, y, dx, dy, pressure)
@@ -429,20 +496,56 @@ function love.touchpressed(id, x, y, dx, dy, pressure)
     end
 end
 function love.gamepadpressed(joystick, button)
-	if state == "main_page" or state == "whatcodetype" then
+	if state == "main_page" then
+		if button == "dpup" then
+			if #codes < 6 then
+				if selectioncode ~= 1 then
+					sfx:play()
+					selectioncode = selectioncode - 1
+				end
+			else 	
+				if selectioncode ~= 1 then
+					sfx:play()
+					selectioncode = selectioncode - 1
+				elseif (selectioncode + pagegap) ~= 1 and selectioncode >= 1 then
+					sfx:play()
+					pagegap = pagegap - 1
+				end
+			end
+		end
+		if button == "dpdown" then
+			if #codes < 6 then
+				if selectioncode ~= 6 then
+					sfx:play()
+					selectioncode = selectioncode + 1
+				end
+			else 	
+				if selectioncode ~= 6 then
+					sfx:play()
+					selectioncode = selectioncode + 1
+				elseif (selectioncode + pagegap) ~= #codes and selectioncode >= 6 then
+					sfx:play()
+					pagegap = pagegap + 1
+				end
+			end
+		end
+	elseif state == "whatcodetype" then
 		if button == "dpup" then
 			if selectioncode ~= 1 then
+				sfx:play()
 				selectioncode = selectioncode - 1
 			end
 		end
 		if button == "dpdown" then
 			if selectioncode ~= #codetypes then
+				sfx:play()
 				selectioncode = selectioncode + 1
 			end
 		end
 	end
 	if state == "whatcodetype" then
 		if button == "a" then
+			sfx2:play()
 			if selectioncode ~= 3 then
 				add_new_code()
 			else
@@ -452,6 +555,7 @@ function love.gamepadpressed(joystick, button)
 	end
 	if state == "main_page" then
 		if button == "a" then
+			sfx2:play()
 			rendercode()
 		end
 	end
