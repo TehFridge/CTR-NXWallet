@@ -10,7 +10,7 @@ title = "TicketManager"
 author = "TehFridge"
 description = "Bileciki do kontroli."
 version = "1.0.0"
-icons = { ctr = "icon.png" }
+icons = { ctr = "3ds.png", hac = "switch.jpg"}
 
 ## --- Build Options --- ##
 
@@ -22,6 +22,6 @@ icons = { ctr = "icon.png" }
 # [bool]   @packaged      : Whether to bundle your game into the executable.
 #                           Default: false.
 [build]
-targets = ["ctr"]
+targets = ["ctr", "hac"]
 source = "love-main"
 packaged = true
