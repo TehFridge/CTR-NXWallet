@@ -266,29 +266,29 @@ end
 function zappkalogin()
 	declarecode = codetypes[selectioncode]
 	changes = "numtel"
-	love.keyboard.setTextInput(true, {type = "numpad", hint = "Numer Tel."})
+	love.keyboard.setTextInput(true, {type = "numpad", hint = "Phone Number"})
 	love.keyboard.setTextInput(false)
 end
 function kod_sms()
 	declarecode = codetypes[selectioncode]
 	changes = "smscode"
-	love.keyboard.setTextInput(true, {type = "numpad", hint = "Kod SMS"})
+	love.keyboard.setTextInput(true, {type = "numpad", hint = "SMS Code"})
 	love.keyboard.setTextInput(false)
 end
 function add_new_code()
 	declarecode = codetypes[selectioncode]
 	changes = "code"
 	if declarecode == "QRCODE" then
-		love.keyboard.setTextInput(true, {hint = "Dane Kodu"})
+		love.keyboard.setTextInput(true, {hint = "Code Data"})
 	else
-		love.keyboard.setTextInput(true, {type = "numpad", hint = "Numerki z Kodu"})
+		love.keyboard.setTextInput(true, {type = "numpad", hint = "Code Numbers"})
 	end
 	love.keyboard.setTextInput(false)
 end
 
 function add_new_name()
 	changes = "name"
-	love.keyboard.setTextInput(true, {hint = "Nazwa kodu"})
+	love.keyboard.setTextInput(true, {hint = "Code Name"})
 	love.keyboard.setTextInput(false)
 end
 function save_code()
