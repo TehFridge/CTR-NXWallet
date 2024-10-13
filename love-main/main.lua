@@ -56,7 +56,7 @@ function love.load()
 	end
 	jsonread = true
 	showcode = false
-	codetypes = {"CODE128", "CODEI25", "ZAPPKA", "QRCODE", "EAN13"}
+	codetypes = {"CODE128", "CODEI25", "ZAPPKA", "QRCODE", "EAN13", "CODE128SUB"}
     state = "main_page"
     code_type = 0
 	selectioncode = 1
@@ -397,6 +397,10 @@ function draw_top_screen()
 				else
 					TextDraw.DrawTextCentered("Sorry the TOTP Generation Failed. Try Again Later", SCREEN_WIDTH/2, SCREEN_HEIGHT / 2, {0, 0, 0, 1}, font, 2)
 				end
+			elseif codeteraz == "CODE128SUB" then
+				love.graphics.setColor(0, 0, 0, 1)
+				local y = (SCREEN_HEIGHT) / 3
+				barcode:draw('notext', y, SCREEN_WIDTH)
 			elseif codeteraz == "EAN13" then
 				love.graphics.setColor(1, 1, 1, 1)
 				EAN13.render_image(barcode_image, SCREEN_WIDTH, SCREEN_HEIGHT, BAR_SCALE)
@@ -443,6 +447,7 @@ function draw_top_screen()
 			TextDraw.DrawText("Żappka (Requires Internet)", 27, 180, {0, 0, 0, 1}, font, 1.9)
 			TextDraw.DrawText("QR Code", 27, 200, {0, 0, 0, 1}, font, 1.9)
 			TextDraw.DrawText("EAN13 Barcode", 27, 220, {0, 0, 0, 1}, font, 1.9)
+			TextDraw.DrawText("Code128 w/ Subset Switching", 27, 240, {0, 0, 0, 1}, font, 1.9)
 		end 
 		for _, button in ipairs(buttons) do
 			love.graphics.setColor(1, 1, 1, 1)
@@ -492,6 +497,7 @@ function draw_bottom_screen()
 		TextDraw.DrawText("Żappka (Requires Internet)", 27, 110, {0, 0, 0, 1}, font, 1.9)
 		TextDraw.DrawText("QR Code", 27, 130, {0, 0, 0, 1}, font, 1.9)
 		TextDraw.DrawText("EAN13 Barcode", 27, 150, {0, 0, 0, 1}, font, 1.9)
+		TextDraw.DrawText("Code128 w/ Subset Switching", 27, 170, {0, 0, 0, 1}, font, 1.9)
     end 
 	for _, button in ipairs(buttons) do
 		love.graphics.setColor(1, 1, 1, 1)
@@ -501,7 +507,7 @@ end
 function rendercode()
 	collectgarbage("collect")
 	if codes[selectioncode + pagegap].codetype == "CODE128" then
-		barcode = code128(codes[selectioncode + pagegap].code, 30 * BAR_SCALE, BAR_SCALE)
+		barcode = code128(codes[selectioncode + pagegap].code, 30 * BAR_SCALE, BAR_SCALE, nil, false)
 	elseif codes[selectioncode + pagegap].codetype == "CODEI25" then
 		barcodeImage = itfbarcode.generateImage(codes[selectioncode + pagegap].code, config, BAR_SCALE)
 	elseif codes[selectioncode + pagegap].codetype == "ZAPPKA" then
@@ -512,6 +518,8 @@ function rendercode()
 		barcode_image = EAN13.create_image(codes[selectioncode + pagegap].code, 3, 67)
 	elseif codes[selectioncode + pagegap].codetype == "wavetest" then
 		barcodeImage = itfbarcode.generateImage(codes[selectioncode + pagegap].code, config, BAR_SCALE)
+	elseif codes[selectioncode + pagegap].codetype == "CODE128SUB" then
+		barcode = code128(codes[selectioncode + pagegap].code, 30 * BAR_SCALE, BAR_SCALE - 0.3, nil, true)
 	end
 	codeteraz = codes[selectioncode + pagegap].codetype
 	showcode = true
