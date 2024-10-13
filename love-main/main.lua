@@ -282,7 +282,7 @@ end
 function add_new_code()
 	declarecode = codetypes[selectioncode]
 	changes = "code"
-	if declarecode == "QRCODE" then
+	if declarecode == "QRCODE" or declarecode == "CODE128" or declarecode == "CODE128SUB" then
 		love.keyboard.setTextInput(true, {hint = "Code Data"})
 	else
 		love.keyboard.setTextInput(true, {type = "numpad", hint = "Code Numbers"})
