@@ -9,7 +9,7 @@
 title = "CTR-NXWallet"
 author = "TehFridge"
 description = "Bileciki do kontroli."
-version = "1.0.0"
+version = "1.0.1"
 icons = { ctr = "3ds.png", hac = "switch.jpg"}
 
 ## --- Build Options --- ##
