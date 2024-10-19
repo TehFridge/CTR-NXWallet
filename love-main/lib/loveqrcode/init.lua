@@ -40,21 +40,34 @@ QRCode.__index = QRCode
 
 --#region Private methods
 
----Encodes the QR code
+---Encodes the QR code with a one-pixel padding and semi-transparent white pixels
 ---@param self QRCode
 local function encode(self)
     local ok, result = qrencode.qrcode(self.text, 1)
     assert(ok, result)
+
     self.size = #result
-    local buffer = love.image.newImageData(self.size, self.size)
-    buffer:mapPixel(function (y,x)
-        local r = result[y+1][x+1] > 0 and 1 or 0
-        return r,r,r,r 
+    local paddedSize = self.size + 2  -- Add 1 pixel padding to each side
+    local buffer = love.image.newImageData(paddedSize, paddedSize)
+
+    -- Map pixels to encode the QR code with padding and semi-transparent pixels
+    buffer:mapPixel(function(y, x)
+        -- Check if the current pixel is within the QR code area or in the padding area
+        if x > 0 and x <= self.size and y > 0 and y <= self.size then
+            local isDarkPixel = result[y][x] > 0  -- Check if the pixel is dark (1)
+            if isDarkPixel then
+                return 0, 0, 0, 1  -- Fully opaque black for data bits
+            else
+                return 1, 1, 1, 0.7  -- Semi-transparent white for spaces
+            end
+        else
+            return 1, 1, 1, 0.7  -- Semi-transparent white pixels for the padding area
+        end
     end)
+
     if self.buffer then self.buffer:release() end
     self.buffer = love.graphics.newImage(buffer)
     buffer:release()
-    
 end
 --#endregion
 

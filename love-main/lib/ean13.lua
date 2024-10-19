@@ -66,7 +66,7 @@ function EAN13.create_image(barcode, width, height)
             if bit == "1" then
                 barcode_image:setPixel(x, y, 0, 0, 0, 1)  -- Black for bar
             else
-                barcode_image:setPixel(x, y, 1, 1, 1, 1)  -- White for space
+                barcode_image:setPixel(x, y, 1, 1, 1, 0.7)  -- White for space
             end
         end
     end

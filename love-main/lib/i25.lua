@@ -18,7 +18,7 @@ local defaultConfig = {
     wideWidth = 7,      -- Width of wide bars in pixels
     barHeight = 20,    -- Height of the barcode in pixels
     barColor = {0, 0, 0, 255},       -- Black bars (RGBA)
-    backgroundColor = {255, 255, 255, 255}  -- White background (RGBA)
+    backgroundColor = {255, 255, 255, 178}  -- White background (RGBA)
 }
 
 -- Helper function to validate and pad the number

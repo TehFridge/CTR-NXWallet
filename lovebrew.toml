@@ -9,8 +9,8 @@
 title = "CTR-NXWallet"
 author = "TehFridge"
 description = "Bileciki do kontroli."
-version = "1.0.1"
-icons = { ctr = "3ds.png", hac = "switch.jpg"}
+version = "1.0.2"
+icons = { ctr = "3ds.png", hac = "switch.jpg", cafe = ""}
 
 ## --- Build Options --- ##
 
@@ -22,6 +22,6 @@ icons = { ctr = "3ds.png", hac = "switch.jpg"}
 # [bool]   @packaged      : Whether to bundle your game into the executable.
 #                           Default: false.
 [build]
-targets = ["ctr", "hac"]
+targets = ["ctr", "hac", "cafe"]
 source = "love-main"
 packaged = true

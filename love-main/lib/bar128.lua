@@ -315,7 +315,10 @@ function Barcode:draw(text, y, S_WIDTH)
 
     -- Account for the quiet zone
     local cursor = x + self.barWidth * 10
-
+    love.graphics.setColor(1,1,1,0.7)
+    love.graphics.rectangle("fill", x, y, totalWidth, self.barHeight,7,7,10)
+	love.graphics.setColor(0,0,0,1)
+	
     for _, glyph in pairs(self.cachedBarcode) do
         local isDrawing = true
         for i = 1, string.len(glyph), 1 do
