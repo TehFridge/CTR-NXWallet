@@ -637,7 +637,7 @@ function love.gamepadpressed(joystick, button)
 			if #codes ~= 1 then
 				if #codes > 6 then
 					table.remove(codes, selectioncode + pagegap)
-					if selectioncode > 5 then
+					if pagegap >= 1 then
 						pagegap = pagegap - 1
 					end
 					love.filesystem.write("kody.json", json.encode(codes))
