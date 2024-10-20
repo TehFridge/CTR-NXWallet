@@ -92,29 +92,6 @@ function love.load()
 	end
 	xPos = love.graphics.getWidth() 
 	table.insert(buttons, createButton(10, 10, "assets/back.png", goback, "whatcodetype", "barcode"))
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-		
-		
-	
-	
-		
-	
-	
 	centerX, centerY = SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2
 	for i = 1, numStars do
 		createStar()
@@ -223,14 +200,11 @@ function calculatetotp()
 
 	if outputBytes ~= nil then
 		
-		if #outputBytes >= 4 then
-			
+		if #outputBytes >= 4 then			
 			local byteIndex = outputBytes:byte(#outputBytes)
 			local offset = bit.band(byteIndex, 15)
 			print("byteIndex: " .. byteIndex)
 			print("offset: " .. offset)
-
-			
 			local magicNumber = bit.band(c(outputBytes, offset + 1), javaIntMax) % 1000000  
 			totp = string.format("%06d", magicNumber)
 			print(totp)
@@ -259,26 +233,9 @@ end
 function refresh_data(url, request, inheaders, metoda)
     print(url)
 	print(request)
-	
-    
-    
-        
-        
-        
-		
-        
-        
-        
-        
-		
-		
-		
-        
-    
-    
+
 	local request_body = request 
     response_body = {}
-    
 
 	code, body, headers = https.request(url, {data = request_body, method = metoda, headers = inheaders})
 	print(body)
@@ -380,8 +337,6 @@ end
 function sendbackvercode(smscode)  
 	local data = json.encode({operationName = "SignInWithPhone",variables = {input = {phoneNumber = {countryCode = "48", nationalNumber = numertel},verificationCode = smscode}}, query = "mutation SignInWithPhone($input: SignInInput!) { signIn(input: $input) { customToken } }"})
 	refresh_data("https://super-account.spapp.zabka.pl/", data, {["content-type"] = "application/json", ["authorization"] = "Bearer " .. boinaczejjebnie, ["user-agent"] = "okhttp/4.12.0", ["x-apollo-operation-id"] = "a531998ec966db0951239efb91519560346cfecac77459fe3b85c5b786fa41de"	,["x-apollo-operation-name"] = "SignInWithPhone", ["accept"] = "multipart/mixed; deferSpec=20220824, application/json"}, "POST")
-	
-	
 	local tokentemp = responded.data.signIn.customToken
 	local data = json.encode({token = tokentemp, returnSecureToken = "true"})
 	refresh_data("https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyCustomToken?key=AIzaSyDe2Fgxn_8HJ6NrtJtp69YqXwocutAoa9Q", data, {["content-type"] = "application/json"}, "POST")
@@ -469,19 +424,7 @@ function draw_top_screen()
 				barcode:draw('notext', y, SCREEN_WIDTH)
 			elseif codeteraz == "EAN13" then
 				love.graphics.setColor(1, 1, 1, 1)
-				EAN13.render_image(barcode_image, SCREEN_WIDTH, SCREEN_HEIGHT, BAR_SCALE)
-			
-				
-				
-				
-				
-				
-					
-				
-					
-				
-					
-				
+				EAN13.render_image(barcode_image, SCREEN_WIDTH, SCREEN_HEIGHT, BAR_SCALE)				
 			end
 		else
 			if love._console == "3DS" then
@@ -727,9 +670,6 @@ function createStar()
     })
 end
 function love.update(dt)
-	
-		
-	
 	if theme == "dark" then
 		for i, star in ipairs(stars) do
 			
