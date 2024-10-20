@@ -633,6 +633,23 @@ function love.gamepadpressed(joystick, button)
 				end
 			end
 		end
+		if button == "x" then
+			if #codes ~= 1 then
+				if #codes > 6 then
+					table.remove(codes, selectioncode + pagegap)
+					if selectioncode > 5 then
+						pagegap = pagegap - 1
+					end
+					love.filesystem.write("kody.json", json.encode(codes))
+				else
+					table.remove(codes, selectioncode)
+					if selectioncode ~= 1 then
+						selectioncode = selectioncode - 1
+					end
+					love.filesystem.write("kody.json", json.encode(codes))
+			    end
+			end
+		end
 	elseif state == "whatcodetype" then
 		if button == "dpup" then
 			if selectioncode ~= 1 then
