@@ -192,52 +192,50 @@ function createButton(x, y, imagePath, callback, statename, secstatename, thrdst
         end
     }
 end
-function calculatetotp() --NAPRAWIŁEM KURWA
+function calculatetotp()
 	local javaIntMax = 2147483647
 
 	local function c(arr, index)
 		local result = 0
-		for i = index, index + 4 do
+		for i = index, index + 3 do  -- Fix the loop to read 4 bytes correctly
 			result = bit.bor(bit.lshift(result, 8), bit.band(arr:byte(i), 0xFF))
 		end
 		return result
 	end
+
 	local secretHex = codes[selectioncode + pagegap].qrsecret
 	local secret = (secretHex:gsub('..', function(hex)
-        return string.char(tonumber(hex, 16))
-    end))
+		return string.char(tonumber(hex, 16))
+	end))
+
 	if intranet == "true" then
 		czas = alt_kalibracja()
 	else
 		czas = updatetime_withserver()
 		print("internet: " .. czas)
 	end
-	if love._console == "3ds" then
-		ts = math.floor(czas / 30)
-	else 
-		ts = math.floor(czas / 30)
-	end
-	print(ts)
-    local msg = struct.pack(">L8", ts)
 
-    local outputBytes = sha1.hmac_binary(secret, msg)
+	ts = math.floor(czas / 30)
+	print(ts)
+
+	local msg = struct.pack(">L8", ts)
+	local outputBytes = sha1.hmac_binary(secret, msg)
+
 	if outputBytes ~= nil then
 		-- Ensure we have enough bytes to read
 		if #outputBytes >= 4 then
-			-- Safely extract byte for offset and perform operations
+			-- Use the last byte of the HMAC result to calculate the offset
 			local byteIndex = outputBytes:byte(#outputBytes)
-			print("byteIndex: " .. byteIndex)
 			local offset = bit.band(byteIndex, 15)
+			print("byteIndex: " .. byteIndex)
 			print("offset: " .. offset)
-			if offset ~= 0 then
-				local magicNumber = bit.band(c(outputBytes, offset), javaIntMax) % 1000000		
-				totp = string.format("%06d", magicNumber)
-				print(totp)
-				print("https://zlgn.pl/view/dashboard?ploy=" .. codes[selectioncode + pagegap].zappkaid .. "&loyal=" .. totp)
-				qr1 = qrcode("https://zlgn.pl/view/dashboard?ploy=" .. codes[selectioncode + pagegap].zappkaid .. "&loyal=" .. totp)
-			else 
-				qr1 = nil
-			end
+
+			-- Extract the integer at the specified offset to generate the TOTP
+			local magicNumber = bit.band(c(outputBytes, offset + 1), javaIntMax) % 1000000  -- Offset adjusted for 1-based index
+			totp = string.format("%06d", magicNumber)
+			print(totp)
+			print("https://zlgn.pl/view/dashboard?ploy=" .. codes[selectioncode + pagegap].zappkaid .. "&loyal=" .. totp)
+			qr1 = qrcode("https://zlgn.pl/view/dashboard?ploy=" .. codes[selectioncode + pagegap].zappkaid .. "&loyal=" .. totp)
 			generated_once = true
 		else
 			print("outputBytes too short: " .. #outputBytes)
