@@ -1,5 +1,5 @@
 require "lib.text-draw"
-
+font = love.graphics.newFont(12, "normal", 4) -- Font lol
 local json = require("lib.json")
 local qrcode = require('lib.loveqrcode')
 local https = require("https")
@@ -30,28 +30,36 @@ kodyexist = love.filesystem.exists("kody.json")
 local stars = {}
 local numStars = 200
 local centerX, centerY
+--sine scroll text (NX Only)
+local xPos
+local speed = 300 -- Speed of scrolling
 
+local frequency = 5 -- Frequency of sine wave
 if love._potion_version == nil then
-	local nest = require("nest").init({ console = "3ds", scale = 1 })
+	local nest = require("nest").init({ console = "switch", scale = 1 })
 	love._nest = true
     love._console_name = "Switch"
 end
 if love._console == "3DS" then
+    charWidth = 60 -- Fixed width for each character
+	amplitude = 25 -- Amplitude of sine wave
 	SCREEN_WIDTH = 400
 	SCREEN_HEIGHT = 240
 	QR_SCALE_BASE = 214.5
 	BAR_SCALE = 2.5
 	BUTTONSCALE = 1
-	theme = "dark"
-	themecolor = {1,1,1,1}
+	theme = "light"
+	text = "CTRWallet"
 elseif love._console == "Switch" then
+	charWidth = 120 -- Fixed width for each character
+	amplitude = 50 -- Amplitude of sine wave
 	SCREEN_WIDTH = 1280
 	SCREEN_HEIGHT = 720
 	QR_SCALE_BASE = 504.5
 	BAR_SCALE = 6
 	BUTTONSCALE = 2
 	theme = "dark"
-	themecolor = {1,1,1,1}
+	text = "NXWallet"
 elseif love._console == "Wii U" then
 	SCREEN_WIDTH = 854
 	SCREEN_HEIGHT = 480
@@ -77,13 +85,12 @@ function love.load()
     checkforcodes()
 	if love._console == "Switch" then
 		table.insert(buttons, createButton(SCREEN_WIDTH / 1.25, SCREEN_WIDTH / 2, "assets/add.png", addcode, "main_page", "barcode"))
-		osc = true
 	elseif love._console == "3DS" then
-		osc = true
 		table.insert(buttons, createButton(195, 195, "assets/add.png", addcode, "main_page", "barcode"))
 	elseif love._console == "Wii U" then
 		table.insert(buttons, createButton(SCREEN_WIDTH / 1.4, SCREEN_WIDTH / 2.2, "assets/add.png", addcode, "main_page", "barcode"))
 	end
+	xPos = love.graphics.getWidth() -- Start position off-screen
 	table.insert(buttons, createButton(10, 10, "assets/back.png", goback, "whatcodetype", "barcode"))
 	-- --hehe 
 	-- waveImage = itfbarcode.generateImage("3561413568147977", config)
@@ -108,23 +115,21 @@ function love.load()
 		-- return (yOffsetIndex + i) % 126 + 1 -- + 1 bo tablice w lua indexują się od 1
 	-- end
 	-- local function updateYOffsetIndex() yOffsetIndex = (yOffsetIndex + 1) % 126 end
-	if osc == true then
-		centerX, centerY = SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2
-		for i = 1, numStars do
-			createStar()
-		end
+	centerX, centerY = SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2
+	for i = 1, numStars do
+		createStar()
+	end
 
-		for i = 1, numStars do
-			local distance = love.math.random(0, math.min(SCREEN_WIDTH, SCREEN_HEIGHT) / 2)
-			local angle = love.math.random() * 2 * math.pi
-			stars[i] = {
-				x = centerX + math.cos(angle) * distance,
-				y = centerY + math.sin(angle) * distance,
-				distance = distance,
-				speed = love.math.random(50, 150) / 100, -- Speed multiplier for star movement
-				size = love.math.random(1, 3)
-			}
-		end
+	for i = 1, numStars do
+		local distance = love.math.random(0, math.min(SCREEN_WIDTH, SCREEN_HEIGHT) / 2)
+		local angle = love.math.random() * 2 * math.pi
+		stars[i] = {
+			x = centerX + math.cos(angle) * distance,
+			y = centerY + math.sin(angle) * distance,
+			distance = distance,
+			speed = love.math.random(50, 150) / 100, -- Speed multiplier for star movement
+			size = love.math.random(1, 3)
+		}
 	end
 	music:setLooping(true)
     music:play()
@@ -407,18 +412,34 @@ function draw_top_screen()
     if theme == "light" then
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.rectangle("fill", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
+		themecolor = {0,0,0,1}
     else
         if theme == "dark" then
             love.graphics.setColor(0.19, 0.20, 0.22, 1)
             love.graphics.rectangle("fill", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
+			themecolor = {1,1,1,1}
         end 
     end
-	if osc == true then
+	if theme == "dark" then
 		love.graphics.setColor(1,1,1,0.4) -- White color for the stars
 		for _, star in ipairs(stars) do
 			love.graphics.circle("fill", star.x, star.y, 2)
 		end
 	end	
+	if theme == "dark" then
+		love.graphics.setColor(1,1,1,0.7)
+		-- Calculate the position for each letter based on sine wave
+		local offset = love.graphics.getHeight() / 2
+
+		for i = 1, #text do
+			local letter = text:sub(i, i)
+			local letterX = xPos + (i - 1) * charWidth
+			local letterY = offset + amplitude * math.sin((i + love.timer.getTime()) * frequency)
+			local sineshit = (math.sin((i + love.timer.getTime()) * frequency) ) / 4
+			
+			love.graphics.print(letter, letterX, letterY - 30,sineshit,BAR_SCALE * 1.5,BAR_SCALE * 1.5)
+		end
+	end
     if state == "main_page" then
 		if showcode == true then
 			if codeteraz == "CODE128" then
@@ -475,15 +496,15 @@ function draw_top_screen()
     end
 	if love._console == "Switch" or love._console == "Wii U" then
 		if state == "main_page" then
-			TextDraw.DrawText("Your Codes/Tickets", 60, 40, themecolor, font, 3)
-			TextDraw.DrawText("->", 5, 70 + selectioncode * 30, themecolor, font, 1.9)
+			TextDraw.DrawText("Your Codes/Tickets", 60, 25, themecolor, font, 3)
+			TextDraw.DrawText("->", 5, 55 + selectioncode * 30, themecolor, font, 1.9)
 			if #codes < 6 then
 				for i = 1, #codes do
-					TextDraw.DrawText(codes[i + pagegap].name, 27, 70 + 30 * i, themecolor, font, 2.3)
+					TextDraw.DrawText(codes[i + pagegap].name, 27, 55 + 30 * i, themecolor, font, 2.3)
 				end
 			else 
 				for i = 1, 6 do
-					TextDraw.DrawText(codes[i + pagegap].name, 27, 70 + 30 * i, themecolor, font, 1.9)
+					TextDraw.DrawText(codes[i + pagegap].name, 27, 55 + 30 * i, themecolor, font, 1.9)
 				end
 			end
 		end 
@@ -507,7 +528,7 @@ function draw_top_screen()
 	if state == "restartplz" then
         TextDraw.DrawTextCentered("Restart the app plz.", SCREEN_WIDTH/2, 106, themecolor, font, 2.3)
     end
-	TextDraw.DrawText("BGM: Mission Briefing LSDJ Cover by nanka 8bit", 1, SCREEN_HEIGHT - 20, themecolor, font, 1.3)
+	TextDraw.DrawText("BGM: funky lesbians (LVS OST) - ida", 1, SCREEN_HEIGHT - 20, themecolor, font, 1.3)
 end
        
 function draw_bottom_screen()
@@ -647,6 +668,13 @@ function love.gamepadpressed(joystick, button)
 	if button == "start" then
 		love.event.quit()
     end
+	if button == "leftshoulder" then
+		if theme == "light" then
+			theme = "dark"
+		else
+			theme = "light"
+		end
+	end
 end
 
 function love.textinput(text)
@@ -687,7 +715,7 @@ function love.update(dt)
 	-- if codeteraz == "wavetest" then
 		-- shiftRight(lookup)
 	-- end
-	if osc == true then
+	if theme == "dark" then
 		for i, star in ipairs(stars) do
 			-- Move the star away from the center
 			local directionX = (star.x - centerX) * star.speed * dt
@@ -703,6 +731,15 @@ function love.update(dt)
 				table.remove(stars, i) -- Remove the star from the list
 				createStar() -- Create a new star at the center
 			end
+		end
+	end
+	if theme == "dark" then
+		-- Update the x position of the text
+		xPos = xPos - speed * dt
+
+		-- Reset position when the text goes off-screen
+		if xPos < -(#text * charWidth) then
+			xPos = love.graphics.getWidth()
 		end
 	end
     love.graphics.origin()  
