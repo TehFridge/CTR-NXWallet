@@ -20,19 +20,24 @@ function TextDraw.GetWrappedText(text, font, width, scale)
     newString = newString .. line
     return newString
 end
-function TextDraw.DrawText(text, x, y, color, font, scale)
+function TextDraw.DrawText(text, x, y, color, font, scale, shadow)
     local font = font or love.graphics.getFont()
     local scale = scale or 1
     love.graphics.setFont(font)
-    love.graphics.setColor(color)
+	if shadow == true then
+		love.graphics.setColor({0,0,0,0.4})
+		love.graphics.print(text, x + 5, y + 5, 0, scale, scale)
+	end
+	love.graphics.setColor(color)
     love.graphics.print(text, x, y, 0, scale, scale)
+	
 end
 
 
-function TextDraw.DrawTextCentered(text, x, y, color, font, scale)
+function TextDraw.DrawTextCentered(text, x, y, color, font, scale, shadow)
     local width = TextDraw.GetTextWidth(text, font, scale)
     local height = TextDraw.GetTextHeight(text, font, scale)
-    TextDraw.DrawText(text, x - width / 2, y - height / 2, color, font, scale)
+    TextDraw.DrawText(text, x - width / 2, y - height / 2, color, font, scale, shadow)
 end
 
 

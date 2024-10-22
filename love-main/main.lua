@@ -1,5 +1,5 @@
 require "lib.text-draw"
-font = love.graphics.newFont(12, "normal", 4) 
+font = love.graphics.newFont("assets/clacon2.ttf", 12, "normal", 4) 
 local json = require("lib.json")
 local qrcode = require('lib.loveqrcode')
 local https = require("https")
@@ -25,23 +25,19 @@ local gonotfish = love.audio.newSource("assets/back.ogg", "static")
 local sfx2 = love.audio.newSource("assets/accept.ogg", "static")
 love.graphics.setDefaultFilter("nearest")
 kodyexist = love.filesystem.exists("kody.json")
-
-
 local stars = {}
 local numStars = 200
 local centerX, centerY
-
 local xPos
 local speed = 300 
-
 local frequency = 5 
 if love._potion_version == nil then
-	local nest = require("nest").init({ console = "switch", scale = 1 })
+	local nest = require("nest").init({ console = "3ds", scale = 1 })
 	love._nest = true
     love._console_name = "Switch"
 end
 if love._console == "3DS" then
-    charWidth = 60 
+    charWidth = 45 
 	amplitude = 25 
 	SCREEN_WIDTH = 400
 	SCREEN_HEIGHT = 240
@@ -51,7 +47,7 @@ if love._console == "3DS" then
 	theme = "light"
 	text = "CTRWallet"
 elseif love._console == "Switch" then
-	charWidth = 120 
+	charWidth = 90 
 	amplitude = 50 
 	SCREEN_WIDTH = 1280
 	SCREEN_HEIGHT = 720
@@ -68,7 +64,6 @@ elseif love._console == "Wii U" then
 	BUTTONSCALE = 2
 end
 function love.load()
-
 	jsonread = false
 	refresh_data("https://zabka-snrs.zabka.pl/v4/server/time", data, {["api-version"] = "4.4", ["application-id"] = "%C5%BCappka", ["user-agent"] = "Synerise Android SDK 5.9.0 pl.zabka.apb2c", ["accept"] = "application/json", ["mobile-info"] = "horizon;28;AW700000000;9;CTR-001;nintendo;5.9.0", ["content-type"] = "application/json; charset=UTF-8", ["authorization"] = authtoken}, "GET")
 	if not string.find(body, "serverTime") then
@@ -199,8 +194,7 @@ function calculatetotp()
 	local outputBytes = sha1.hmac_binary(secret, msg)
 
 	if outputBytes ~= nil then
-		
-		if #outputBytes >= 4 then			
+		if #outputBytes >= 4 then
 			local byteIndex = outputBytes:byte(#outputBytes)
 			local offset = bit.band(byteIndex, 15)
 			print("byteIndex: " .. byteIndex)
@@ -233,10 +227,8 @@ end
 function refresh_data(url, request, inheaders, metoda)
     print(url)
 	print(request)
-
 	local request_body = request 
     response_body = {}
-
 	code, body, headers = https.request(url, {data = request_body, method = metoda, headers = inheaders})
 	print(body)
 	print(code)
@@ -337,6 +329,8 @@ end
 function sendbackvercode(smscode)  
 	local data = json.encode({operationName = "SignInWithPhone",variables = {input = {phoneNumber = {countryCode = "48", nationalNumber = numertel},verificationCode = smscode}}, query = "mutation SignInWithPhone($input: SignInInput!) { signIn(input: $input) { customToken } }"})
 	refresh_data("https://super-account.spapp.zabka.pl/", data, {["content-type"] = "application/json", ["authorization"] = "Bearer " .. boinaczejjebnie, ["user-agent"] = "okhttp/4.12.0", ["x-apollo-operation-id"] = "a531998ec966db0951239efb91519560346cfecac77459fe3b85c5b786fa41de"	,["x-apollo-operation-name"] = "SignInWithPhone", ["accept"] = "multipart/mixed; deferSpec=20220824, application/json"}, "POST")
+	
+	
 	local tokentemp = responded.data.signIn.customToken
 	local data = json.encode({token = tokentemp, returnSecureToken = "true"})
 	refresh_data("https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyCustomToken?key=AIzaSyDe2Fgxn_8HJ6NrtJtp69YqXwocutAoa9Q", data, {["content-type"] = "application/json"}, "POST")
@@ -389,7 +383,9 @@ function draw_top_screen()
 			local letterX = xPos + (i - 1) * charWidth
 			local letterY = offset + amplitude * math.sin((i + love.timer.getTime()) * frequency)
 			local sineshit = (math.sin((i + love.timer.getTime()) * frequency) ) / 4
-			
+			love.graphics.setColor(0,0,0,0.4)
+			love.graphics.print(letter, letterX + 5, letterY - 25,sineshit,BAR_SCALE * 1.5,BAR_SCALE * 1.5)
+			love.graphics.setColor(1,1,1,0.7)
 			love.graphics.print(letter, letterX, letterY - 30,sineshit,BAR_SCALE * 1.5,BAR_SCALE * 1.5)
 		end
 	end
@@ -416,7 +412,7 @@ function draw_top_screen()
 					love.graphics.setColor(1,1,1,1)
 					qr1:draw(x + 15,y + 10,0,scale, scale, qrSize / 2, qrSize / 2)
 				else
-					TextDraw.DrawTextCentered("Sorry the TOTP Generation Failed. Try Again Later", SCREEN_WIDTH/2, SCREEN_HEIGHT / 2, themecolor, font, 2)
+					TextDraw.DrawTextCentered("Sorry the TOTP Generation Failed. Try Again Later", SCREEN_WIDTH/2, SCREEN_HEIGHT / 2, themecolor, font, 2, true)
 				end
 			elseif codeteraz == "CODE128SUB" then
 				love.graphics.setColor(0, 0, 0, 1)
@@ -424,39 +420,39 @@ function draw_top_screen()
 				barcode:draw('notext', y, SCREEN_WIDTH)
 			elseif codeteraz == "EAN13" then
 				love.graphics.setColor(1, 1, 1, 1)
-				EAN13.render_image(barcode_image, SCREEN_WIDTH, SCREEN_HEIGHT, BAR_SCALE)				
+				EAN13.render_image(barcode_image, SCREEN_WIDTH, SCREEN_HEIGHT, BAR_SCALE)
 			end
 		else
 			if love._console == "3DS" then
-				TextDraw.DrawTextCentered("CTRWallet", SCREEN_WIDTH/2, 16, themecolor, font, 2.3)
+				TextDraw.DrawTextCentered("CTRWallet", SCREEN_WIDTH/2, 16, themecolor, font, 2.3, true)
 			else 
-				TextDraw.DrawTextCentered("NXWallet", SCREEN_WIDTH/2, 16, themecolor, font, 2.3)
+				TextDraw.DrawTextCentered("NXWallet", SCREEN_WIDTH/2, 16, themecolor, font, 2.3, true)
 			end
-			TextDraw.DrawTextCentered("by TehFridge", SCREEN_WIDTH/2, 42, themecolor, font, 1.9)
+			TextDraw.DrawTextCentered("by TehFridge", SCREEN_WIDTH/2, 42, themecolor, font, 1.9, true)
 		end
     end
 	if love._console == "Switch" or love._console == "Wii U" then
 		if state == "main_page" then
-			TextDraw.DrawText("Your Codes/Tickets", 60, 25, themecolor, font, 3)
-			TextDraw.DrawText("->", 5, 55 + selectioncode * 30, themecolor, font, 1.9)
+			TextDraw.DrawText("Your Codes/Tickets", 60, 25, themecolor, font, 3, true)
+			TextDraw.DrawText("->", 5, 55 + selectioncode * 30, themecolor, font, 1.9, true)
 			if #codes < 6 then
 				for i = 1, #codes do
-					TextDraw.DrawText(codes[i + pagegap].name, 27, 55 + 30 * i, themecolor, font, 2.3)
+					TextDraw.DrawText(codes[i + pagegap].name, 27, 55 + 30 * i, themecolor, font, 2.3, true)
 				end
 			else 
 				for i = 1, 6 do
-					TextDraw.DrawText(codes[i + pagegap].name, 27, 55 + 30 * i, themecolor, font, 1.9)
+					TextDraw.DrawText(codes[i + pagegap].name, 27, 55 + 30 * i, themecolor, font, 1.9, true)
 				end
 			end
 		end 
 		if state == "whatcodetype" then
-			TextDraw.DrawText("->", 5, 120 + selectioncode * 20, themecolor, font, 1.9)
-			TextDraw.DrawText("Code128", 27, 140, themecolor, font, 1.9)
-			TextDraw.DrawText("Code I2/5", 27, 160, themecolor, font, 1.9)
-			TextDraw.DrawText("Żappka (Requires Internet)", 27, 180, themecolor, font, 1.9)
-			TextDraw.DrawText("QR Code", 27, 200, themecolor, font, 1.9)
-			TextDraw.DrawText("EAN13 Barcode", 27, 220, themecolor, font, 1.9)
-			TextDraw.DrawText("Code128 w/ Subset Switching", 27, 240, themecolor, font, 1.9)
+			TextDraw.DrawText("->", 5, 120 + selectioncode * 20, themecolor, font, 1.9, true)
+			TextDraw.DrawText("Code128", 27, 140, themecolor, font, 1.9, true)
+			TextDraw.DrawText("Code I2/5", 27, 160, themecolor, font, 1.9, true)
+			TextDraw.DrawText("Żappka (Requires Internet)", 27, 180, themecolor, font, 1.9, true)
+			TextDraw.DrawText("QR Code", 27, 200, themecolor, font, 1.9, true)
+			TextDraw.DrawText("EAN13 Barcode", 27, 220, themecolor, font, 1.9, true)
+			TextDraw.DrawText("Code128 w/ Subset Switching", 27, 240, themecolor, font, 1.9, true)
 		end 		
 		for _, button in ipairs(buttons) do
 			love.graphics.setColor(1, 1, 1, 1)
@@ -464,19 +460,17 @@ function draw_top_screen()
 		end	
 	end
 	if state == "whatcodetype" then
-        TextDraw.DrawTextCentered("Select a code type", SCREEN_WIDTH/2, 106, themecolor, font, 2.3)
+        TextDraw.DrawTextCentered("Select a code type", SCREEN_WIDTH/2, 106, themecolor, font, 2.3, true)
     end
 	if state == "restartplz" then
-        TextDraw.DrawTextCentered("Restart the app plz.", SCREEN_WIDTH/2, 106, themecolor, font, 2.3)
+        TextDraw.DrawTextCentered("Restart the app plz.", SCREEN_WIDTH/2, 106, themecolor, font, 2.3, true)
     end
-	TextDraw.DrawText("BGM: funky lesbians (LVS OST) - ida", 1, SCREEN_HEIGHT - 20, themecolor, font, 1.3)
+	TextDraw.DrawText("BGM: funky lesbians (LVS OST) - ida", 1, SCREEN_HEIGHT - 20, themecolor, font, 1.3, true)
 end
        
 function draw_bottom_screen()
     SCREEN_WIDTH = 400
     SCREEN_HEIGHT = 240
-
-    
     if theme == "light" then
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.rectangle("fill", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -487,26 +481,26 @@ function draw_bottom_screen()
         end 
     end
     if state == "main_page" then
-        TextDraw.DrawTextCentered("Your Codes/Tickets", SCREEN_WIDTH/2.5, 20, themecolor, font, 2.3)
-		TextDraw.DrawText("->", 5, 50 + selectioncode * 20, themecolor, font, 1.9)
+        TextDraw.DrawTextCentered("Your Codes/Tickets", SCREEN_WIDTH/2.5, 20, themecolor, font, 2.3, true)
+		TextDraw.DrawText("->", 5, 50 + selectioncode * 20, themecolor, font, 1.9, true)
 		if #codes < 6 then
 			for i = 1, #codes do
-				TextDraw.DrawText(codes[i + pagegap].name, 27, 50 + 20 * i, themecolor, font, 1.9)
+				TextDraw.DrawText(codes[i + pagegap].name, 27, 50 + 20 * i, themecolor, font, 1.9, true)
 			end
 		else 
 			for i = 1, 6 do
-				TextDraw.DrawText(codes[i + pagegap].name, 27, 50 + 20 * i, themecolor, font, 1.9)
+				TextDraw.DrawText(codes[i + pagegap].name, 27, 50 + 20 * i, themecolor, font, 1.9, true)
 			end
 		end
     end 
 	if state == "whatcodetype" then
-		TextDraw.DrawText("->", 5, 50 + selectioncode * 20, themecolor, font, 1.9)
-        TextDraw.DrawText("Code128", 27, 70, themecolor, font, 1.9)
-		TextDraw.DrawText("Code I2/5", 27, 90, themecolor, font, 1.9)
-		TextDraw.DrawText("Żappka (Requires Internet)", 27, 110, themecolor, font, 1.9)
-		TextDraw.DrawText("QR Code", 27, 130, themecolor, font, 1.9)
-		TextDraw.DrawText("EAN13 Barcode", 27, 150, themecolor, font, 1.9)
-		TextDraw.DrawText("Code128 w/ Subset Switching", 27, 170, themecolor, font, 1.9)
+		TextDraw.DrawText("->", 5, 50 + selectioncode * 20, themecolor, font, 1.9, true)
+        TextDraw.DrawText("Code128", 27, 70, themecolor, font, 1.9, true)
+		TextDraw.DrawText("Code I2/5", 27, 90, themecolor, font, 1.9, true)
+		TextDraw.DrawText("Żappka (Requires Internet)", 27, 110, themecolor, font, 1.9, true)
+		TextDraw.DrawText("QR Code", 27, 130, themecolor, font, 1.9, true)
+		TextDraw.DrawText("EAN13 Barcode", 27, 150, themecolor, font, 1.9, true)
+		TextDraw.DrawText("Code128 w/ Subset Switching", 27, 170, themecolor, font, 1.9, true)
     end 
 
 	for _, button in ipairs(buttons) do
@@ -672,16 +666,11 @@ end
 function love.update(dt)
 	if theme == "dark" then
 		for i, star in ipairs(stars) do
-			
 			local directionX = (star.x - centerX) * star.speed * dt
 			local directionY = (star.y - centerY) * star.speed * dt
 			star.x = star.x + directionX
 			star.y = star.y + directionY
-
-			
-			star.size = star.size * (1 - dt * 0.2)
-
-			
+			star.size = star.size * (1 - dt * 0.2)	
 			if star.x < 0 or star.x > SCREEN_WIDTH or star.y < 0 or star.y > SCREEN_HEIGHT or star.size < 0.5 then
 				table.remove(stars, i) 
 				createStar() 
@@ -689,10 +678,7 @@ function love.update(dt)
 		end
 	end
 	if theme == "dark" then
-		
 		xPos = xPos - speed * dt
-
-		
 		if xPos < -(#text * charWidth) then
 			xPos = love.graphics.getWidth()
 		end
