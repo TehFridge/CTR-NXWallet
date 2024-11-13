@@ -26,7 +26,7 @@ function TextDraw.DrawText(text, x, y, color, font, scale, shadow)
     love.graphics.setFont(font)
 	if shadow == true then
 		love.graphics.setColor({0,0,0,0.4})
-		love.graphics.print(text, x + 5, y + 5, 0, scale, scale)
+		love.graphics.print(text, x + 3 * scale, y + 3 * scale, 0, scale, scale)
 	end
 	love.graphics.setColor(color)
     love.graphics.print(text, x, y, 0, scale, scale)

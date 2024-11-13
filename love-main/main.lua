@@ -2,6 +2,7 @@ require "lib.text-draw"
 font = love.graphics.newFont("assets/clacon2.ttf", 12, "normal", 4) 
 local json = require("lib.json")
 local qrcode = require('lib.loveqrcode')
+local zappkacode = require('lib.zappkacode')
 local https = require("https")
 local uuidgen = require("lib.uuid")
 local ltn12 = require("ltn12")
@@ -32,7 +33,7 @@ local xPos
 local speed = 300 
 local frequency = 5 
 if love._potion_version == nil then
-	local nest = require("nest").init({ console = "3ds", scale = 1 })
+	local nest = require("nest").init({ console = "switch", scale = 1 })
 	love._nest = true
     love._console_name = "Switch"
 end
@@ -64,6 +65,7 @@ elseif love._console == "Wii U" then
 	BUTTONSCALE = 2
 end
 function love.load()
+	debugtext = ""
 	jsonread = false
 	refresh_data("https://zabka-snrs.zabka.pl/v4/server/time", data, {["api-version"] = "4.4", ["application-id"] = "%C5%BCappka", ["user-agent"] = "Synerise Android SDK 5.9.0 pl.zabka.apb2c", ["accept"] = "application/json", ["mobile-info"] = "horizon;28;AW700000000;9;CTR-001;nintendo;5.9.0", ["content-type"] = "application/json; charset=UTF-8", ["authorization"] = authtoken}, "GET")
 	if not string.find(body, "serverTime") then
@@ -73,7 +75,7 @@ function love.load()
 	end
 	jsonread = true
 	showcode = false
-	codetypes = {"CODE128", "CODEI25", "ZAPPKA", "QRCODE", "EAN13", "CODE128SUB"}
+	codetypes = {"CODE128", "CODEI25", "ZAPPKA", "QRCODE", "EAN13", "CODE128SUB", "IMAGE"}
     state = "main_page"
     code_type = 0
 	selectioncode = 1
@@ -202,8 +204,8 @@ function calculatetotp()
 			local magicNumber = bit.band(c(outputBytes, offset + 1), javaIntMax) % 1000000  
 			totp = string.format("%06d", magicNumber)
 			print(totp)
-			print("https://zlgn.pl/view/dashboard?ploy=" .. codes[selectioncode + pagegap].zappkaid .. "&loyal=" .. totp)
-			qr1 = qrcode("https://zlgn.pl/view/dashboard?ploy=" .. codes[selectioncode + pagegap].zappkaid .. "&loyal=" .. totp)
+			print("https://srln.pl/view/dashboard?ploy=" .. codes[selectioncode + pagegap].zappkaid .. "&loyal=" .. totp)
+			qr1 = zappkacode("https://srln.pl/view/dashboard?ploy=" .. codes[selectioncode + pagegap].zappkaid .. "&loyal=" .. totp, 4)
 			generated_once = true
 		else
 			print("outputBytes too short: " .. #outputBytes)
@@ -276,10 +278,16 @@ end
 function add_new_code()
 	declarecode = codetypes[selectioncode]
 	changes = "code"
-	if declarecode == "QRCODE" or declarecode == "CODE128" or declarecode == "CODE128SUB" then
-		love.keyboard.setTextInput(true, {hint = "Code Data"})
+	if love._potion_version ~= nil then
+		if declarecode == "QRCODE" or declarecode == "CODE128" or declarecode == "CODE128SUB" then
+			love.keyboard.setTextInput(true, {hint = "Code Data"})
+		elseif declarecode == "EAN13" then
+			love.keyboard.setTextInput(true, {type = "numpad", hint = "Code Numbers"})
+		elseif declarecode == "IMAGE" then
+			love.keyboard.setTextInput(true, {hint = "Image URL"})
+		end
 	else
-		love.keyboard.setTextInput(true, {type = "numpad", hint = "Code Numbers"})
+		love.keyboard.setTextInput(true, 200, 100, 40, 30)
 	end
 	love.keyboard.setTextInput(false)
 end
@@ -289,8 +297,13 @@ function add_new_name()
 	love.keyboard.setTextInput(true, {hint = "Code Name"})
 	love.keyboard.setTextInput(false)
 end
+
 function save_code()
-	table.insert(codes, {code = codeinput, codetype = declarecode, name = nameinput})
+	if declarecode == "IMAGE" then
+		table.insert(codes, {url = codeinput, codetype = declarecode, name = nameinput})
+	else
+		table.insert(codes, {code = codeinput, codetype = declarecode, name = nameinput})
+	end
 	love.filesystem.write("kody.json", json.encode(codes))
 	state = "main_page"
 end
@@ -339,21 +352,37 @@ function sendbackvercode(smscode)
 	refresh_data("https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key=AIzaSyDe2Fgxn_8HJ6NrtJtp69YqXwocutAoa9Q", data, {["content-type"] = "application/json"}, "POST")
 	loadingtext = "Logowanie 45%..."
 	uuidgen.seed()
-	local data = json.encode({identityProviderToken = tokentemp, identityProvider = "OAUTH", apiKey = "b646c65e-a43d-4a61-9294-6c7c4385c762", uuid = uuidgen(), deviceId = "0432b18513e325a5"})
-	refresh_data("https://zabka-snrs.zabka.pl/sauth/v3/auth/login/client/conditional", data, {["api-version"] = "4.4", ["application-id"] = "%C5%BCappka", ["user-agent"] = "Synerise Android SDK 5.9.0 pl.zabka.apb2c", ["accept"] = "application/json", ["mobile-info"] = "horizon;28;AW700000000;9;CTR-001;nintendo;5.9.0", ["content-type"] = "application/json; charset=UTF-8"}, "POST")
+	local data = json.encode({operationName = "SignIn",query = "mutation SignIn($signInInput: SignInInput!) { signIn(signInInput: $signInInput) { profile { __typename ...UserProfileParts } } }  fragment UserProfileParts on UserProfile { email gender }",variables = {signInInput = {sessionId = "65da013a-0d7d-3ad4-82bd-2bc15077d7f5"}}})
+	refresh_data("https://api.spapp.zabka.pl/", data, {["user-agent"] = "Zappka/40038 (Horizon; nintendo/ctr; 56c41945-ba88-4543-a525-4e8f7d4a5812) REL/28", ["accept"] = "application/json", ["content-type"] = "application/json", ["authorization"] = "Bearer " .. tokentemp}, "POST")
 	loadingtext = "Logowanie 65%..."
-	authtoken = responded.token
-	local data = ""
-	refresh_data("https://qr-bff.spapp.zabka.pl/qr-code/secret", data, {["authorization"] = "Bearer " .. tokentemp, ["content-type"] = "application/json", ["accept"] = "application/json", ["app"] = "zappka-mobile", ["user-agent"] = "okhttp/4.12.0", ["content-length"] = "0"}, "GET")
-	id = responded.userId
-	secret = responded.secrets.loyal
-	refresh_data("https://zabka-snrs.zabka.pl/v4/my-account/personal-information", data, {["api-version"] = "4.4", ["application-id"] = "%C5%BCappka", ["user-agent"] = "Synerise Android SDK 5.9.0 pl.zabka.apb2c", ["accept"] = "application/json", ["mobile-info"] = "horizon;28;AW700000000;9;CTR-001;nintendo;5.9.0", ["content-type"] = "application/json; charset=UTF-8", ["authorization"] = authtoken}, "GET")	
-	zappkaname = responded.firstName
-	table.insert(codes, {qrsecret = secret, codetype = declarecode, name = "Żappka " .. "( " .. zappkaname .. ")", zappkaid = id})
+	authtoken = tokentemp
+	print(authtoken)
+	local data = json.encode({operationName = "QrCode", query ="query QrCode { qrCode { loyalSecret paySecret ployId } }", variables = {}})
+	local data = data:gsub('"variables":%[%]', '"variables":{}')
+	refresh_data("https://api.spapp.zabka.pl/", data, {["user-agent"] = "Zappka/40038 (Horizon; nintendo/ctr; 56c41945-ba88-4543-a525-4e8f7d4a5812) REL/28", ["accept"] = "application/json", ["content-type"] = "application/json", ["authorization"] = "Bearer " .. authtoken}, "POST")
+	id = responded.data.qrCode.ployId
+	secret = responded.data.qrCode.loyalSecret
+	local data = json.encode({operationName = "GetProfile", query = "query GetProfile { profile { id firstName birthDate phoneNumber { countryCode nationalNumber } email } }",variables = {}})
+	local data = data:gsub('"variables":%[%]', '"variables":{}')
+	refresh_data("https://super-account.spapp.zabka.pl/", data, {["user-agent"] = "Zappka/40038 (Horizon; nintendo/ctr; 56c41945-ba88-4543-a525-4e8f7d4a5812) REL/28", ["accept"] = "application/json", ["content-type"] = "application/json", ["authorization"] = "Bearer " .. tokentemp}, "POST")	
+	zappkaname = responded.data.profile.firstName
+	table.insert(codes, {qrsecret = secret, codetype = declarecode, name = "Żappka " .. "( " .. zappkaname .. " )", zappkaid = id})
 	love.filesystem.write("kody.json", json.encode(codes))
 	state = "restartplz"
 end
-
+function downloadimage(url)
+	jsonread = false
+	if love._console == "3DS" then
+		local data = json.encode({url = url})
+		refresh_data("https://api.szprink.xyz/t3x/convert", data, {["api-version"] = "4.4", ["application-id"] = "%C5%BCappka", ["user-agent"] = "Synerise Android SDK 5.9.0 pl.zabka.apb2c", ["accept"] = "application/json", ["mobile-info"] = "horizon;28;AW700000000;9;CTR-001;nintendo;5.9.0", ["content-type"] = "application/json"}, "POST")
+		local imageData = love.image.newImageData(love.filesystem.newFileData(body, "image.t3x"))
+		kuponimage = love.graphics.newImage(imageData)
+	else
+		refresh_data(url, "", {}, "GET")
+		local imageData = love.image.newImageData(love.filesystem.newFileData(body, "image.png"))
+		kuponimage = love.graphics.newImage(imageData)
+	end
+end
 function draw_top_screen()
     
     if theme == "light" then
@@ -421,6 +450,14 @@ function draw_top_screen()
 			elseif codeteraz == "EAN13" then
 				love.graphics.setColor(1, 1, 1, 1)
 				EAN13.render_image(barcode_image, SCREEN_WIDTH, SCREEN_HEIGHT, BAR_SCALE)
+			elseif codeteraz == "IMAGE" then
+				love.graphics.setColor(1, 1, 1, 1)
+				local imageWidth = kuponimage:getWidth()
+				local imageHeight = kuponimage:getHeight()
+				local x = (SCREEN_WIDTH - imageWidth) / 2
+				local y = (SCREEN_HEIGHT - imageHeight) / 2
+				-- Draw the image at the calculated position
+				love.graphics.draw(kuponimage, x, y)
 			end
 		else
 			if love._console == "3DS" then
@@ -453,6 +490,7 @@ function draw_top_screen()
 			TextDraw.DrawText("QR Code", 27, 200, themecolor, font, 1.9, true)
 			TextDraw.DrawText("EAN13 Barcode", 27, 220, themecolor, font, 1.9, true)
 			TextDraw.DrawText("Code128 w/ Subset Switching", 27, 240, themecolor, font, 1.9, true)
+			TextDraw.DrawText("Image (Requires Internet)", 27, 260, themecolor, font, 1.9, true)
 		end 		
 		for _, button in ipairs(buttons) do
 			love.graphics.setColor(1, 1, 1, 1)
@@ -501,6 +539,7 @@ function draw_bottom_screen()
 		TextDraw.DrawText("QR Code", 27, 130, themecolor, font, 1.9, true)
 		TextDraw.DrawText("EAN13 Barcode", 27, 150, themecolor, font, 1.9, true)
 		TextDraw.DrawText("Code128 w/ Subset Switching", 27, 170, themecolor, font, 1.9, true)
+		TextDraw.DrawText("Image (Requires Internet)", 27, 190, themecolor, font, 1.9, true)
     end 
 
 	for _, button in ipairs(buttons) do
@@ -510,6 +549,7 @@ function draw_bottom_screen()
 end
 function rendercode()
 	collectgarbage("collect")
+	jsonread = true
 	if codes[selectioncode + pagegap].codetype == "CODE128" then
 		barcode = code128(codes[selectioncode + pagegap].code, 30 * BAR_SCALE, BAR_SCALE, nil, false)
 	elseif codes[selectioncode + pagegap].codetype == "CODEI25" then
@@ -524,6 +564,8 @@ function rendercode()
 		barcodeImage = itfbarcode.generateImage(codes[selectioncode + pagegap].code, config, BAR_SCALE)
 	elseif codes[selectioncode + pagegap].codetype == "CODE128SUB" then
 		barcode = code128(codes[selectioncode + pagegap].code, 30 * BAR_SCALE, BAR_SCALE - 0.3, nil, true)
+	elseif codes[selectioncode + pagegap].codetype == "IMAGE" then
+		downloadimage(codes[selectioncode + pagegap].url)
 	end
 	codeteraz = codes[selectioncode + pagegap].codetype
 	showcode = true
@@ -643,6 +685,9 @@ function love.textinput(text)
 		kod_sms()
 	elseif changes == "smscode" then
 		sendbackvercode(text)  
+	elseif changes == "imageadd" then
+		codeinput = text
+		add_new_name()
 	end
 end
 function shiftRight(t)
