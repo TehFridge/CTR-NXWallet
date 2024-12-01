@@ -281,7 +281,7 @@ function add_new_code()
 	if love._potion_version ~= nil then
 		if declarecode == "QRCODE" or declarecode == "CODE128" or declarecode == "CODE128SUB" then
 			love.keyboard.setTextInput(true, {hint = "Code Data"})
-		elseif declarecode == "EAN13" then
+		elseif declarecode == "EAN13" or declarecode == "CODEI25" then
 			love.keyboard.setTextInput(true, {type = "numpad", hint = "Code Numbers"})
 		elseif declarecode == "IMAGE" then
 			love.keyboard.setTextInput(true, {hint = "Image URL"})
